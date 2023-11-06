@@ -3,11 +3,9 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 )
 
@@ -27,7 +25,12 @@ func main() {
 		fmt.Print("command> ")
 		buf, _ := reader.ReadString('\n')
 
-		if strings.Split(buf, "\n")[0] == "exit" {
+		command := strings.Split(buf, " ")[0]
+
+		command = strings.TrimSuffix(command, "\n")
+		command = strings.TrimSuffix(command, "\r")
+
+		if command == "exit" {
 			os.Exit(0)
 		}
 
@@ -38,9 +41,17 @@ func main() {
 
 		returnable := &input{}
 
-		returnable.command = strings.Split(buf, " ")[0]
+		returnable.command = command
 		returnable.path = strings.Split(buf, " ")[1]
-		returnable.flags = strings.Split(buf, " ")[2:]
+
+		for _, i := range strings.Split(buf, " ")[2:] {
+			i = strings.TrimSuffix(i, "\n")
+			i = strings.TrimSuffix(i, "\r")
+			returnable.flags = append(returnable.flags, i)
+		}
+
+		returnable.path = strings.TrimSuffix(returnable.path, "\n")
+		returnable.path = strings.TrimSuffix(returnable.path, "\r")
 
 		returnable.parseInput()
 	}
@@ -52,32 +63,38 @@ func (inp *input) parseInput() {
 		return
 	}
 
-	path, er := os.Getwd()
+	path, err := os.Getwd()
 
-	if er != nil {
-		log.Println(er)
+	if err != nil {
+		log.Println(err)
 	}
 
-	fmt.Println(filepath.Join(path, inp.path))
+	mainPath := filepath.Join(path, inp.path)
 
-	cont, errParse := ioutil.ReadFile(filepath.Join(path, inp.path))
+	cont, errParse := os.ReadFile(mainPath)
 
 	if errParse != nil {
 		fmt.Printf("Error at opening file: %v\n", errParse)
 		return
 	}
 
+	//var words []string
+	//
+	//for _, i :=
+
+	fmt.Println(strings.ReplaceAll(string(cont), "\n", " "))
+
 	switch inp.flags {
 	case nil:
-		wordsDefault := strings.Split(string(cont), "\n")
-		sort.Strings(wordsDefault)
-		for _, i := range wordsDefault {
-			errWrite := ioutil.WriteFile(filepath.Join(path, inp.path), []byte(i+"\n"), 0666)
-
-			if errWrite != nil {
-				fmt.Printf("Error at writing file: %v\n", errWrite)
-			}
-		}
+		//wordsDefault := strings.Split(string(cont), "\n")
+		//sort.Strings(wordsDefault)
+		//fmt.Println(wordsDefault)
+		//for _, i := range wordsDefault {
+		//	errWrite := os.WriteFile(mainPath, []byte(i+"\n"), 0666)
+		//	if errWrite != nil {
+		//		fmt.Printf("Error at writing file: %v\n", errWrite)
+		//	}
+		//}
 	}
 	return
 }
