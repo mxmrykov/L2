@@ -12,10 +12,10 @@ func main() {
 	//наша строка для распаковки
 	a := "a4abc2d5e"
 	//основная функция распаковки
-	unpack(a)
+	fmt.Println(unpack(a))
 }
 
-func unpack(stroke string) {
+func unpack(stroke string) string {
 
 	//задаем переменные: строка корректна, массив цифр в строке, новая строка в которую будут добавляться данные
 	var (
@@ -52,8 +52,7 @@ func unpack(stroke string) {
 		newStroke += i
 	}
 
-	//логаем строку
-	fmt.Println(newStroke)
+	return newStroke
 }
 
 // функция проверки валидности строки и в случае валидности возвращает массив цифр, встреч. в исходной строке
