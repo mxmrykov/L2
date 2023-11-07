@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -71,30 +72,55 @@ func (inp *input) parseInput() {
 
 	mainPath := filepath.Join(path, inp.path)
 
-	cont, errParse := os.ReadFile(mainPath)
+	cont, errParse := os.OpenFile(mainPath, os.O_RDWR|os.O_TRUNC, 0755)
 
 	if errParse != nil {
 		fmt.Printf("Error at opening file: %v\n", errParse)
 		return
 	}
 
-	//var words []string
-	//
-	//for _, i :=
+	defer cont.Close()
+	scan := bufio.NewScanner(cont)
 
-	fmt.Println(strings.ReplaceAll(string(cont), "\n", " "))
+	var words []string
+
+	for scan.Scan() {
+		words = append(words, scan.Text())
+	}
+
+	if len(inp.flags) == 0 {
+		var (
+			justWrite       = make([]string, len(words))
+			finalJustString = make([][]byte, 0, len(words))
+		)
+		copy(justWrite, words)
+		sort.Strings(justWrite)
+		for _, i := range justWrite {
+			finalJustString = append(finalJustString, []byte(i+"\n"))
+		}
+		fmt.Println(finalJustString)
+		for _, i := range finalJustString {
+			_, erWrite := cont.Write(i)
+			if erWrite != nil {
+				fmt.Printf("Error at wtiting string %s to file: %v\n", string(i), erWrite)
+			}
+		}
+		fmt.Println("file sorted")
+		return
+	}
 
 	switch inp.flags {
-	case nil:
-		//wordsDefault := strings.Split(string(cont), "\n")
-		//sort.Strings(wordsDefault)
-		//fmt.Println(wordsDefault)
-		//for _, i := range wordsDefault {
-		//	errWrite := os.WriteFile(mainPath, []byte(i+"\n"), 0666)
-		//	if errWrite != nil {
-		//		fmt.Printf("Error at writing file: %v\n", errWrite)
-		//	}
-		//}
 	}
 	return
 }
+
+//jh
+//vb
+//nv
+//bn
+//vd
+//as
+//fd
+//gdg
+//dfg
+//f
