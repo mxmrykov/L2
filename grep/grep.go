@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -60,9 +61,18 @@ func main() {
 
 		prm := splited[1 : len(splited)-2]
 
+		flagMustSkip := false
+
 		for i := 0; i < len(prm); i += 1 {
-			if i%2 == 0 {
-				inp.params = append(inp.params, prm[i:i+2])
+			if prm[i] != "-i" && prm[i] != "-v" && prm[i] != "-n" {
+				if flagMustSkip {
+					flagMustSkip = false
+				} else {
+					inp.params = append(inp.params, prm[i:i+2])
+					flagMustSkip = true
+				}
+			} else {
+				inp.params = append(inp.params, prm[i:i+1])
 			}
 		}
 
@@ -90,16 +100,80 @@ func (I *input) searchForWord() {
 	mainPath := filepath.Join(path, I.path)
 
 	//получаем список наших слов
-	_, errRead := ReadFile(mainPath)
+	words, errRead := ReadFile(mainPath)
 	if errRead != nil {
 		return
 	}
 
-	fmt.Println(generateRegex(I.parseFlagsContext()["-a"], I.parseFlagsContext()["-b"], I.word))
+	bothRegs := false
+
+	for _, flag := range I.params {
+		if flag[0] == "-i" {
+			bothRegs = true
+		}
+	}
+
+	searchRegex := generateRegex(I.word, bothRegs)
+
+	regex, _ := regexp.Compile(searchRegex)
+
+	searched := [][]string{}
+
+	for _, word := range words {
+		temp := regex.FindAllString(word, -1)
+		searched = append(searched, temp)
+	}
+
+	var builder strings.Builder
+
+	for _, wds := range searched {
+		for _, wd := range wds {
+			_, er := builder.WriteString(strings.TrimPrefix(wd+"\n", " "))
+			if er != nil {
+				fmt.Println(er)
+			}
+		}
+	}
+
+	splitedReady := strings.Split(builder.String(), "\n")
+	parsedContext := I.parseFlagsContext()
+
+	for _, elem := range splitedReady {
+		tempElem := strings.Trim(elem, "\n\r")
+		for _, el := range getIndexOf(words, tempElem) {
+			if el != 0 {
+				if len(words[el-parsedContext["-b"]]) != 0 {
+					fmt.Println(words[el-parsedContext["-b"]])
+				}
+				fmt.Println(words[el])
+				if len(words[el+parsedContext["-a"]]) != 0 {
+					fmt.Println(words[el-parsedContext["-a"]])
+				}
+			}
+		}
+	}
 }
 
-func generateRegex(a, b int, word string) string {
-	res := fmt.Sprintf("^[\\w\\d ]{0,%d}(%s)[\\w\\d ]{0,%d}$", a, word, b)
+func getIndexOf(ar []string, elem string) []int {
+
+	indexes := []int{0}
+
+	for i := 0; i < len(ar); i += 1 {
+		if ar[i] == elem {
+			indexes = append(indexes, i)
+		}
+	}
+
+	return indexes
+}
+
+func generateRegex(word string, bothRegs bool) string {
+
+	res := fmt.Sprintf(".*\\b(%s)\\b.*", word)
+
+	if bothRegs {
+		res = fmt.Sprintf(".*\\b(%s|%s)\\b.*", strings.ToUpper(word), strings.ToLower(word))
+	}
 
 	return res
 }
