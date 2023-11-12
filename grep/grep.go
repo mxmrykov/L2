@@ -106,14 +106,18 @@ func (I *input) searchForWord() {
 	}
 
 	bothRegs := false
+	invert := false
 
 	for _, flag := range I.params {
 		if flag[0] == "-i" {
 			bothRegs = true
 		}
+		if flag[0] == "-v" {
+			invert = true
+		}
 	}
 
-	searchRegex := generateRegex(I.word, bothRegs)
+	searchRegex := generateRegex(I.word, bothRegs, invert)
 
 	regex, _ := regexp.Compile(searchRegex)
 
@@ -139,15 +143,29 @@ func (I *input) searchForWord() {
 	parsedContext := I.parseFlagsContext()
 
 	for _, elem := range splitedReady {
-		tempElem := strings.Trim(elem, "\n\r")
-		for _, el := range getIndexOf(words, tempElem) {
-			if el != 0 {
-				if len(words[el-parsedContext["-b"]]) != 0 {
-					fmt.Println(words[el-parsedContext["-b"]])
-				}
-				fmt.Println(words[el])
-				if len(words[el+parsedContext["-a"]]) != 0 {
-					fmt.Println(words[el-parsedContext["-a"]])
+		tempElem := strings.TrimSuffix(elem, "\n\r")
+		if len(tempElem) > 0 {
+			for _, el := range getIndexOf(words, tempElem) {
+				if el != 0 {
+					if parsedContext["-b"] != 0 {
+						for i := el - parsedContext["-b"]; i < el; i += 1 {
+							fmt.Println(words[i])
+						}
+					} else if parsedContext["-C"] != 0 {
+						for i := el - parsedContext["-C"]; i < el; i += 1 {
+							fmt.Println(words[i])
+						}
+					}
+					fmt.Println(words[el])
+					if parsedContext["-a"] != 0 {
+						for i := el + 1; i < el+parsedContext["-a"]+1; i += 1 {
+							fmt.Println(words[i])
+						}
+					} else if parsedContext["-C"] != 0 {
+						for i := el + 1; i < el+parsedContext["-C"]+1; i += 1 {
+							fmt.Println(words[i])
+						}
+					}
 				}
 			}
 		}
@@ -156,7 +174,7 @@ func (I *input) searchForWord() {
 
 func getIndexOf(ar []string, elem string) []int {
 
-	indexes := []int{0}
+	indexes := []int{}
 
 	for i := 0; i < len(ar); i += 1 {
 		if ar[i] == elem {
@@ -167,12 +185,20 @@ func getIndexOf(ar []string, elem string) []int {
 	return indexes
 }
 
-func generateRegex(word string, bothRegs bool) string {
+func generateRegex(word string, bothRegs bool, revert bool) string {
 
 	res := fmt.Sprintf(".*\\b(%s)\\b.*", word)
 
 	if bothRegs {
-		res = fmt.Sprintf(".*\\b(%s|%s)\\b.*", strings.ToUpper(word), strings.ToLower(word))
+		if revert {
+			res = fmt.Sprintf("^(?:(?!\\b(%s|%s)\\b).)*$", strings.ToUpper(word), strings.ToLower(word))
+		} else {
+			res = fmt.Sprintf(".*\\b(%s|%s)\\b.*", strings.ToUpper(word), strings.ToLower(word))
+		}
+	} else {
+		if revert {
+			res = fmt.Sprintf("^(?:(?!\\b(%s)\\b).)*$", word)
+		}
 	}
 
 	return res
