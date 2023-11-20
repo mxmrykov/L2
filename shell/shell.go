@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -69,8 +70,20 @@ func (p *proc) parseCommand(command string, args []string) {
 	case "echo":
 		printClearArray(args)
 	case "cd":
-		if args[0] == ".." {
-			p.route = routeUp(p.route)
+		if len(args) != 0 {
+			if args[0] == ".." {
+				p.route = routeUp(p.route)
+			} else {
+				w := []rune(args[0])
+				if string(w[0]) == "/" {
+					file, err := absPathErr(args[0])
+					if err == nil {
+						p.route = file
+					} else {
+						fmt.Println(err)
+					}
+				}
+			}
 		}
 	case "pwd":
 		p.logCurrentRoute()
@@ -85,21 +98,36 @@ func printClearArray(args []string) {
 }
 
 func routeUp(currentRoute string) string {
+
 	splitedRoute := strings.Split(currentRoute, "\\")
 	newRoute := splitedRoute[:len(splitedRoute)-1]
 
+	builder := concString(newRoute)
+
+	if len(strings.Split(builder, "\\")) <= 2 {
+		return builder
+	}
+
+	return strings.TrimSuffix(builder, "\\")
+}
+
+func absPathErr(path string) (string, error) {
+	//os.Stat(path)
+	pInfo, err := filepath.Abs(path)
+	return pInfo, err
+}
+
+func concString(arr []string) string {
+
 	var builder strings.Builder
-	for _, s := range newRoute {
+
+	for _, s := range arr {
 		_, err := builder.WriteString(s + "\\")
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-	if len(strings.Split(builder.String(), "\\")) <= 2 {
-		return builder.String()
-	}
-
-	return strings.TrimSuffix(builder.String(), "\\")
+	return builder.String()
 }
 
 func (p *proc) logCurrentRoute() {
