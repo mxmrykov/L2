@@ -54,7 +54,11 @@ func main() {
 
 		params := make([][]string, 0)
 
-		prm := splited[1 : len(splited)-2]
+		var prm []string
+
+		if len(splited) > 2 {
+			prm = splited[1 : len(splited)-2]
+		}
 
 		flagMustSkip := false
 
@@ -122,7 +126,7 @@ func (o *object) download() error {
 		}
 		if n > 0 {
 			downloadedBytes += n
-			fmt.Printf("%d of %d KB downloaded |%s| %d %s | Speed : %.2f KB/s\r", downloadedBytes/1024, file.ContentLength/1024, currentString, percents, "%", downloadSpeed)
+			fmt.Printf("\r%d of %d KB downloaded |%s| %d %s | Speed : %.2f KB/s", downloadedBytes/1024, file.ContentLength/1024, currentString, percents, "%", downloadSpeed)
 		}
 		if err != nil {
 			break
