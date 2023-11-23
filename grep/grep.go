@@ -84,7 +84,7 @@ func main() {
 
 func (I *input) searchForWord() {
 
-	//проверяем если команда не сорт - значит неизвестная
+	//проверяем если команда не grep - значит неизвестная
 	if I.command != "grep" {
 		fmt.Println("Unknown command")
 		return
@@ -105,9 +105,11 @@ func (I *input) searchForWord() {
 		return
 	}
 
+	//ставии флаги false по дефолту
 	bothRegs := false
 	invert := false
 
+	//парсим массив наших флагов
 	for _, flag := range I.params {
 		if flag[0] == "-i" {
 			bothRegs = true
@@ -117,19 +119,23 @@ func (I *input) searchForWord() {
 		}
 	}
 
+	//генерим необходимый regex исходя из флагов и компилим его
 	searchRegex := generateRegex(I.word, bothRegs, invert)
-
 	regex, _ := regexp.Compile(searchRegex)
 
+	//двуммерный массив для добавления строк с совпадениями
 	searched := [][]string{}
 
+	//ищем совпадения с помощью созданного regex
 	for _, word := range words {
 		temp := regex.FindAllString(word, -1)
 		searched = append(searched, temp)
 	}
 
+	//для вывода результата создаем сборщик строк, куда будем помещать конечный результат
 	var builder strings.Builder
 
+	//циклом добавляем все совпадения в нашу строку
 	for _, wds := range searched {
 		for _, wd := range wds {
 			_, er := builder.WriteString(strings.TrimPrefix(wd+"\n", " "))
@@ -139,14 +145,22 @@ func (I *input) searchForWord() {
 		}
 	}
 
+	//далее создаем массив куда будем класть данные по флагам контекста (-a, -b, -C) и парсим эти флаги
 	splitedReady := strings.Split(builder.String(), "\n")
 	parsedContext := I.parseFlagsContext()
 
+	//итерируемся по массиву готовых строк чтобы составить финальный результат
 	for _, elem := range splitedReady {
+
+		//ставим временный элемент равным элементу итерации
 		tempElem := strings.TrimSuffix(elem, "\n\r")
+		//если элемент - не пустая строка - работаем с ним
 		if len(tempElem) > 0 {
+			//итерируемся по найденым индексам временного элемента в общем тексте
 			for _, el := range getIndexOf(words, tempElem) {
+				//так же проверяем что индекс != 0
 				if el != 0 {
+					//выводим для каждого флага соответствующие строки
 					if parsedContext["-b"] != 0 {
 						for i := el - parsedContext["-b"]; i < el; i += 1 {
 							fmt.Println(words[i])
@@ -172,23 +186,20 @@ func (I *input) searchForWord() {
 	}
 }
 
+// возвращает массив индексов найденых элементов в общем масисве
 func getIndexOf(ar []string, elem string) []int {
-
 	indexes := []int{}
-
 	for i := 0; i < len(ar); i += 1 {
 		if ar[i] == elem {
 			indexes = append(indexes, i)
 		}
 	}
-
 	return indexes
 }
 
+// создает regex исходя из параметров
 func generateRegex(word string, bothRegs bool, revert bool) string {
-
 	res := fmt.Sprintf(".*\\b(%s)\\b.*", word)
-
 	if bothRegs {
 		if revert {
 			res = fmt.Sprintf("^(?:(?!\\b(%s|%s)\\b).)*$", strings.ToUpper(word), strings.ToLower(word))
@@ -200,24 +211,20 @@ func generateRegex(word string, bothRegs bool, revert bool) string {
 			res = fmt.Sprintf("^(?:(?!\\b(%s)\\b).)*$", word)
 		}
 	}
-
 	return res
 }
 
+// создает мапу для контекстных флагов
 func (I *input) parseFlagsContext() map[string]int {
-
 	ret := make(map[string]int, 3)
-
 	ret["-a"] = 0
 	ret["-b"] = 0
 	ret["-C"] = 0
-
 	for _, flag := range I.params {
 		if flag[0] == "-a" || flag[0] == "-b" || flag[0] == "-C" {
 			ret[flag[0]], _ = strconv.Atoi(flag[1])
 		}
 	}
-
 	return ret
 
 }

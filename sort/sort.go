@@ -259,9 +259,7 @@ func convertToDoubleArray(words []string) [][]string {
 
 // конвертим двумерный массив строк в двумерный массив байт
 func doubleStringToDoubleByte(words [][]string) [][]byte {
-
 	returnable := make([][]byte, 0, len(words))
-
 	for _, i := range words {
 		tempStroke := ""
 		for _, j := range i {
@@ -271,17 +269,14 @@ func doubleStringToDoubleByte(words [][]string) [][]byte {
 		tempStroke += "\n"
 		returnable = append(returnable, []byte(tempStroke))
 	}
-
 	return returnable
 }
 
 // пишем данные в файл
 func writeToFile(finalJustString [][]byte, cont *os.File) {
-
 	//пословно пишем каждый массив байт в строку файла
 	for _, i := range finalJustString {
 		_, erWrite := cont.Write(i)
-
 		//парсим ошибку добавления, если она есть
 		if erWrite != nil {
 			fmt.Printf("Error at wtiting string %s to file: %v\n", string(i), erWrite)
@@ -289,14 +284,12 @@ func writeToFile(finalJustString [][]byte, cont *os.File) {
 	}
 }
 
+// создаем массив в обратном порядке
 func reverseStringArray(arr []string) []string {
-
 	returnable := make([]string, 0, len(arr))
-
 	for i := len(arr) - 1; i >= 0; i -= 1 {
 		returnable = append(returnable, arr[i])
 	}
-
 	return returnable
 }
 

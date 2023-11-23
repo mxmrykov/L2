@@ -50,33 +50,40 @@ func main() {
 			os.Exit(0)
 		}
 
-		//проверяем что введена и команда
+		//проверяем что введена команда
 		if len(strings.Split(buf, " ")) < 1 {
 			fmt.Println("Wrong arguments")
 			continue
 		} else if len(strings.Split(buf, " ")) == 1 {
+			//если введена только команда, без аргументов - ставим массив аргументов нулевым
 			main.parseCommand(command, nil)
 		} else {
+			//иначе парсим аргументы и триммируем последний
 			args := strings.Split(buf, " ")[1:]
-
 			args[len(args)-1] = strings.TrimSuffix(args[len(args)-1], "\n")
 			args[len(args)-1] = strings.TrimSuffix(args[len(args)-1], "\r")
-
 			main.parseCommand(command, args)
 		}
 	}
 }
 
+// основная функция парсинга флагов
 func (p *proc) parseCommand(command string, args []string) {
 	switch command {
 	case "echo":
+		//если команда - эхо - просто выводим все аргументы
 		printClearArray(args)
 	case "cd":
+		//работаем с окружением
+		//если не введено аргументов - не выполняем никаких действий
 		if len(args) != 0 {
+			//парсим "выход вверх" текущей директории
 			if args[0] == ".." {
 				p.route = routeUp(p.route)
 			} else {
+				//иначе преобразуем путь в массив рун для корректной работы
 				w := []rune(args[0])
+				//если путь глобальный - проверяем его существование и ставим текущую директорию туда
 				if string(w[0]) == "/" {
 					file, err := absPathErr(args[0])
 					if err == nil {
@@ -85,6 +92,8 @@ func (p *proc) parseCommand(command string, args []string) {
 						fmt.Println(err)
 					}
 				} else {
+					//если же путь локальный - проверяем существование внутри
+					//текущей директории и если все ок - переходим туда
 					file, err := tryGetPath(p.route, args[0])
 					if err == nil {
 						p.route = file
@@ -95,10 +104,13 @@ func (p *proc) parseCommand(command string, args []string) {
 			}
 		}
 	case "pwd":
+		//логаем текущую директорию
 		p.logCurrentRoute()
 	case "ps":
+		//логаем все запущенные процессы
 		logProcess()
 	case "kill":
+		//убиваем процесс по PID, если такой есть
 		Pid, errConv := strconv.Atoi(args[0])
 		if errConv != nil {
 			fmt.Println("Err at converting:", errConv)
@@ -111,11 +123,13 @@ func (p *proc) parseCommand(command string, args []string) {
 		}
 		fmt.Println("Process", args[0], "killed")
 	case "ls":
+		//логаем окружение в текущей директории
 		p.getAndLogEnv()
 	}
 
 }
 
+// "чистый" лог - массив выводится в одну строку как обычная строка
 func printClearArray(args []string) {
 	for _, i := range args {
 		fmt.Print(i + " ")
@@ -123,20 +137,23 @@ func printClearArray(args []string) {
 	fmt.Println()
 }
 
+// поднимаемся на папку вверх
 func routeUp(currentRoute string) string {
-
+	//разбиваем роут по \  и получаем список папок,
+	//создавая новый путь без последнего элемента
 	splitedRoute := strings.Split(currentRoute, "\\")
 	newRoute := splitedRoute[:len(splitedRoute)-1]
 
+	//билдим наш путь в едину строку из массива
+	//если текущая папка является "последней" - дальше не идем
 	builder := concString(newRoute)
-
 	if len(strings.Split(builder, "\\")) <= 2 {
 		return builder
 	}
-
 	return strings.TrimSuffix(builder, "\\")
 }
 
+// проверяем и получаем абсолютный путь
 func absPathErr(path string) (string, error) {
 	if _, err := os.Stat(path); err == nil {
 		pInfo, err := filepath.Abs(path)
@@ -146,6 +163,8 @@ func absPathErr(path string) (string, error) {
 	}
 }
 
+// складываем пути, проверяем что они вообще есть
+// (функция для локального взаимодействия)
 func tryGetPath(oldPath, path string) (string, error) {
 	newPath := filepath.Join(oldPath, path)
 	if _, err := os.Stat(newPath); err == nil {
@@ -155,10 +174,9 @@ func tryGetPath(oldPath, path string) (string, error) {
 	}
 }
 
+// простая функция конкатенации строк
 func concString(arr []string) string {
-
 	var builder strings.Builder
-
 	for _, s := range arr {
 		_, err := builder.WriteString(s + "\\")
 		if err != nil {
@@ -168,6 +186,7 @@ func concString(arr []string) string {
 	return builder.String()
 }
 
+// получаем и логаем окружение
 func (p *proc) getAndLogEnv() {
 	all, err := os.ReadDir(p.route)
 	if err != nil {
@@ -179,6 +198,7 @@ func (p *proc) getAndLogEnv() {
 	}
 }
 
+// получаем и логаем запущенные процессы с PID и названием
 func logProcess() {
 	processes, err := ps.Processes()
 	if err != nil {
@@ -192,6 +212,7 @@ func logProcess() {
 	}
 }
 
+// убиваем процесс по PID встроенными методами языка
 func killProcById(Pid int) error {
 	proc, errFind := os.FindProcess(Pid)
 	if errFind != nil {
@@ -204,6 +225,7 @@ func killProcById(Pid int) error {
 	return nil
 }
 
+// логаем текущий путь в формате для команды pwd
 func (p *proc) logCurrentRoute() {
 	fmt.Println()
 	fmt.Println("Path")
