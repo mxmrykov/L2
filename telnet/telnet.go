@@ -75,8 +75,9 @@ func (c connection) start() {
 
 	//таймаут на подключение, по дефолту - 0
 	//если флаг таймаута задан - парсим его
+	fmt.Println(len(c.params))
 	timeOut := 0 * time.Second
-	if len(c.params[0]) != 0 {
+	if len(c.params) != 0 {
 		prvTime := strings.TrimSuffix(strings.Split(c.params[0], "=")[1], "s")
 		prvTimeInt, _ := strconv.Atoi(prvTime)
 		timeOut = time.Duration(prvTimeInt) * time.Second
