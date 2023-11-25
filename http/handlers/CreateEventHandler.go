@@ -7,33 +7,44 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 )
 
 func CreateEventHandler(w http.ResponseWriter, r *http.Request, c *cache.Cache) {
 	if r.Method != http.MethodPost {
+		log.Println("Method error")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		details := models.Details{ErrCode: http.StatusMethodNotAllowed, ErrMessage: "Wrong method"}
-		response, errMarshaling := json.MarshalIndent(models.Error{Err: details}, "", "\t")
-		if errMarshaling != nil {
-			log.Println(errMarshaling)
-			w.Write([]byte("Error erMarshalingResponse"))
-			return
-		}
+		response, _ := json.MarshalIndent(models.Error{Err: details}, "", "\t")
 		w.Write(response)
 		return
 	}
 
-	dateQuery := r.URL.Query().Get("date")
-	timeQuery := r.URL.Query().Get("time")
-	userQuery := r.URL.Query().Get("user_id")
+	decoder := json.NewDecoder(r.Body)
+	var decoded models.Event
+	decodingBodyErr := decoder.Decode(&decoded)
+
+	if decodingBodyErr != nil {
+		log.Println(decodingBodyErr)
+		w.WriteHeader(http.StatusInternalServerError)
+		details := models.Details{ErrCode: http.StatusInternalServerError, ErrMessage: "Wrong method"}
+		response, _ := json.MarshalIndent(models.Error{Err: details}, "", "\t")
+		w.Write(response)
+		return
+	}
+
+	dateQuery := decoded.Date
+	timeQuery := decoded.Time
+	userQuery := decoded.UserId
 
 	_, errParse := time.Parse("2006-01-02", dateQuery)
 
 	if errParse != nil {
 		log.Println(errParse)
-		w.Write([]byte("Error errParse"))
+		w.WriteHeader(http.StatusInternalServerError)
+		details := models.Details{ErrCode: http.StatusInternalServerError, ErrMessage: "Error at date parsing"}
+		response, _ := json.MarshalIndent(models.Error{Err: details}, "", "\t")
+		w.Write(response)
 		return
 	}
 
@@ -41,19 +52,15 @@ func CreateEventHandler(w http.ResponseWriter, r *http.Request, c *cache.Cache) 
 
 	if errParseTime != nil {
 		log.Println(errParseTime)
-		w.Write([]byte("Error errParseTime"))
+		w.WriteHeader(http.StatusInternalServerError)
+		details := models.Details{ErrCode: http.StatusInternalServerError, ErrMessage: "Error at time parsing"}
+		response, _ := json.MarshalIndent(models.Error{Err: details}, "", "\t")
+		w.Write(response)
+		return
 		return
 	}
 
-	userInt, errParseUser := strconv.Atoi(userQuery)
-
-	if errParseUser != nil {
-		log.Println(errParseUser)
-		w.Write([]byte("Error errParseUser"))
-		return
-	}
-
-	event := domain.NewEvent(dateQuery, timeQuery, userInt)
+	event := domain.NewEvent(dateQuery, timeQuery, userQuery)
 
 	c.Create(*event)
 	w.Write([]byte("Successful creation"))

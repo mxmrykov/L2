@@ -86,7 +86,7 @@ func (c *Cache) ReadMonth(date string) []models.Event {
 			return nil
 		}
 
-		if evDate.After(today) && evDate.Before(today.Add(time.Hour*24*30)) {
+		if (evDate.After(today) || evDate.Equal(today)) && evDate.Before(today.Add(time.Hour*24*30)) {
 			result = append(result, *event)
 		}
 	}

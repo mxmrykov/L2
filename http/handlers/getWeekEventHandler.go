@@ -11,14 +11,10 @@ import (
 
 func GetWeekEventHandler(w http.ResponseWriter, r *http.Request, c *cache.Cache) {
 	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		details := models.Details{ErrCode: http.StatusMethodNotAllowed, ErrMessage: "Wrong method"}
-		response, errMarshaling := json.MarshalIndent(models.Error{Err: details}, "", "\t")
-		if errMarshaling != nil {
-			log.Println(errMarshaling)
-			w.Write([]byte("Error erMarshalingResponse"))
-			return
-		}
+		log.Println("Method error")
+		w.WriteHeader(http.StatusInternalServerError)
+		details := models.Details{ErrCode: http.StatusInternalServerError, ErrMessage: "Wrong method"}
+		response, _ := json.MarshalIndent(models.Error{Err: details}, "", "\t")
 		w.Write(response)
 		return
 	}
@@ -29,7 +25,10 @@ func GetWeekEventHandler(w http.ResponseWriter, r *http.Request, c *cache.Cache)
 
 	if errParse != nil {
 		log.Println(errParse)
-		w.Write([]byte("Error errParse"))
+		w.WriteHeader(http.StatusInternalServerError)
+		details := models.Details{ErrCode: http.StatusInternalServerError, ErrMessage: "Error at date parsing"}
+		response, _ := json.MarshalIndent(models.Error{Err: details}, "", "\t")
+		w.Write(response)
 		return
 	}
 
@@ -38,14 +37,20 @@ func GetWeekEventHandler(w http.ResponseWriter, r *http.Request, c *cache.Cache)
 
 		if erMarshalingResponse != nil {
 			log.Println(erMarshalingResponse)
-			w.Write([]byte("Error erMarshalingResponse"))
+			w.WriteHeader(http.StatusInternalServerError)
+			details := models.Details{ErrCode: http.StatusInternalServerError, ErrMessage: "Error at marshaling response"}
+			response, _ := json.MarshalIndent(models.Error{Err: details}, "", "\t")
+			w.Write(response)
 			return
 		}
 
 		w.Write(response)
 	} else {
 		log.Println(errParse)
-		w.Write([]byte("Error getting date"))
+		w.WriteHeader(http.StatusServiceUnavailable)
+		details := models.Details{ErrCode: http.StatusServiceUnavailable, ErrMessage: "Error at date parsing"}
+		response, _ := json.MarshalIndent(models.Error{Err: details}, "", "\t")
+		w.Write(response)
 		return
 	}
 }
