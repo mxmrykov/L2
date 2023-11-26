@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func GetWeekEventHandler(w http.ResponseWriter, r *http.Request, c *cache.Cache) {
+func GetMonthEventHandler(w http.ResponseWriter, r *http.Request, c *cache.Cache) {
 	if r.Method != http.MethodGet {
 		domain.ErrorLogger(w, errors.New("method error"))
 		return
@@ -22,7 +22,7 @@ func GetWeekEventHandler(w http.ResponseWriter, r *http.Request, c *cache.Cache)
 		return
 	}
 
-	if val, ok := c.ReadWeek(dateQuery); ok {
+	if val, ok := c.ReadMonth(dateQuery); ok {
 		if response, erMarshalingResponse := json.MarshalIndent(val, "", "\t"); erMarshalingResponse != nil {
 			domain.ErrorLogger(w, erMarshalingResponse)
 			return
@@ -34,5 +34,4 @@ func GetWeekEventHandler(w http.ResponseWriter, r *http.Request, c *cache.Cache)
 		domain.ErrorLogger(w, errors.New("error at date parsing"))
 		return
 	}
-
 }
