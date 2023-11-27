@@ -1,31 +1,58 @@
 package main
 
-import (
-	"fmt"
-	"math/rand"
-)
+import "fmt"
 
-type Visitor struct {
-	name  string
-	genID int
+type Visitor interface {
+	visitCircle(*Circle)
+	visitSquare(*Square)
 }
 
-type Gen struct{}
+type Shape interface {
+	accept(Visitor)
+}
+
+type Circle struct {
+	radius float64
+}
+
+func (c *Circle) accept(v Visitor) {
+	v.visitCircle(c)
+}
+
+type Square struct {
+	sideLength float64
+}
+
+func (s *Square) accept(v Visitor) {
+	v.visitSquare(s)
+}
+
+type AreaVisitor struct {
+	totalArea float64
+}
+
+func (a *AreaVisitor) visitCircle(c *Circle) {
+	area := 3.14 * c.radius * c.radius
+	a.totalArea += area
+}
+
+func (a *AreaVisitor) visitSquare(s *Square) {
+	area := s.sideLength * s.sideLength
+	a.totalArea += area
+}
 
 func main() {
+	shapes := []Shape{
+		&Circle{radius: 5},
+		&Square{sideLength: 4},
+		&Circle{radius: 3},
+	}
 
-	gen := &Gen{}
+	areaVisitor := AreaVisitor{}
 
-	maxim := &Visitor{name: "maxim"}
-	ivan := &Visitor{name: "ivan"}
+	for _, shape := range shapes {
+		shape.accept(&areaVisitor)
+	}
 
-	gen.genID(maxim)
-	gen.genID(ivan)
-
-	fmt.Println(*maxim)
-	fmt.Println(*ivan)
-}
-
-func (g *Gen) genID(vis *Visitor) {
-	vis.genID = 1000 + rand.Intn(8999)
+	fmt.Println("Total area of all shapes:", areaVisitor.totalArea)
 }

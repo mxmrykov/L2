@@ -1,29 +1,51 @@
 package main
 
-import (
-	"fmt"
-	"log"
-)
+import "fmt"
 
-type Logger struct {
-	logger  Log
-	printer Print
+type CPU struct{}
+
+func (c *CPU) start() {
+	fmt.Println("Starting CPU")
 }
 
-type Log struct{}
-type Print struct{}
+func (c *CPU) execute() {
+	fmt.Println("Executing CPU instructions")
+}
+
+type Memory struct{}
+
+func (m *Memory) load() {
+	fmt.Println("Loading data into memory")
+}
+
+type HardDrive struct{}
+
+func (h *HardDrive) read() {
+	fmt.Println("Reading data from hard drive")
+}
+
+type ComputerFacade struct {
+	cpu       *CPU
+	memory    *Memory
+	hardDrive *HardDrive
+}
+
+func NewComputerFacade() *ComputerFacade {
+	return &ComputerFacade{
+		cpu:       &CPU{},
+		memory:    &Memory{},
+		hardDrive: &HardDrive{},
+	}
+}
+
+func (cf *ComputerFacade) start() {
+	cf.cpu.start()
+	cf.memory.load()
+	cf.hardDrive.read()
+	cf.cpu.execute()
+}
 
 func main() {
-	logger := Logger{}
-
-	logger.printer.Print("message printed from subclass Print")
-	logger.logger.Log("message printed from subclass Log")
-}
-
-func (l Log) Log(message string) {
-	log.Println(message)
-}
-
-func (p Print) Print(message string) {
-	fmt.Println(message)
+	computer := NewComputerFacade()
+	computer.start()
 }

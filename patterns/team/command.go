@@ -2,21 +2,55 @@ package main
 
 import "fmt"
 
-func (c *Controller) execute() {
-	fmt.Println("Command executed")
+type Command interface {
+	execute()
 }
 
-type Controller struct{}
+type Light struct{}
 
-type Receiver struct {
-	c *Controller
+func (l *Light) turnOn() {
+	fmt.Println("Light is turned on")
+}
+
+func (l *Light) turnOff() {
+	fmt.Println("Light is turned off")
+}
+
+type LightOnCommand struct {
+	light *Light
+}
+
+func (c *LightOnCommand) execute() {
+	c.light.turnOn()
+}
+
+type LightOffCommand struct {
+	light *Light
+}
+
+func (c *LightOffCommand) execute() {
+	c.light.turnOff()
+}
+
+type RemoteControl struct {
+	command Command
+}
+
+func (r *RemoteControl) pressButton() {
+	r.command.execute()
 }
 
 func main() {
+	light := Light{}
 
-	printContr := &Controller{}
+	lightOnCommand := LightOnCommand{&light}
+	lightOffCommand := LightOffCommand{&light}
 
-	receiver := Receiver{printContr}
+	remote := RemoteControl{}
 
-	receiver.c.execute()
+	remote.command = &lightOnCommand
+	remote.pressButton()
+
+	remote.command = &lightOffCommand
+	remote.pressButton()
 }

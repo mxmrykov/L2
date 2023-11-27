@@ -1,34 +1,41 @@
 package main
 
-import (
-	"fmt"
-	"math"
-)
+import "fmt"
 
-type Circle struct {
-	radius    float64
-	square    float64
-	perimeter float64
+type Shape interface {
+	draw()
 }
 
-type calc struct{}
+type Circle struct{}
+
+func (c *Circle) draw() {
+	fmt.Println("Drawing a circle")
+}
+
+type Rectangle struct{}
+
+func (r *Rectangle) draw() {
+	fmt.Println("Drawing a rectangle")
+}
+
+type ShapeFactory struct{}
+
+func (sf *ShapeFactory) createShape(shapeType string) Shape {
+	if shapeType == "circle" {
+		return &Circle{}
+	} else if shapeType == "rectangle" {
+		return &Rectangle{}
+	} else {
+		return nil
+	}
+}
 
 func main() {
-	rad := 3.0
-	clc := calc{}
+	factory := ShapeFactory{}
 
-	square := clc.getSquare(rad)
-	perimeter := clc.getPerimeter(rad)
+	circle := factory.createShape("circle")
+	circle.draw()
 
-	product := Circle{radius: rad, square: square, perimeter: perimeter}
-
-	fmt.Println(product)
-}
-
-func (c calc) getSquare(rad float64) float64 {
-	return math.Pi * math.Pow(rad, 2)
-}
-
-func (c calc) getPerimeter(rad float64) float64 {
-	return 2 * math.Pi * rad
+	rectangle := factory.createShape("rectangle")
+	rectangle.draw()
 }

@@ -1,39 +1,69 @@
 package main
 
-import (
-	"fmt"
-	"math"
-)
+import "fmt"
 
-type Circle struct {
-	radius    float64
-	square    float64
-	perimeter float64
+type House struct {
+	Walls      string
+	Roof       string
+	Windows    string
+	Doors      string
+	Foundation string
 }
 
-type calc struct{}
+type HouseBuilder interface {
+	BuildWalls() *HouseBuilder
+	BuildRoof() *HouseBuilder
+	BuildWindows() *HouseBuilder
+	BuildDoors() *HouseBuilder
+	BuildFoundation() *HouseBuilder
+	GetHouse() *House
+}
+
+type ConcreteHouseBuilder struct {
+	house *House
+}
+
+func NewConcreteHouseBuilder() *ConcreteHouseBuilder {
+	return &ConcreteHouseBuilder{house: &House{}}
+}
+
+func (b *ConcreteHouseBuilder) BuildWalls() *ConcreteHouseBuilder {
+	b.house.Walls = "Brick"
+	return b
+}
+
+func (b *ConcreteHouseBuilder) BuildRoof() *ConcreteHouseBuilder {
+	b.house.Roof = "Tile"
+	return b
+}
+
+func (b *ConcreteHouseBuilder) BuildWindows() *ConcreteHouseBuilder {
+	b.house.Windows = "Glass"
+	return b
+}
+
+func (b *ConcreteHouseBuilder) BuildDoors() *ConcreteHouseBuilder {
+	b.house.Doors = "Wooden"
+	return b
+}
+
+func (b *ConcreteHouseBuilder) BuildFoundation() *ConcreteHouseBuilder {
+	b.house.Foundation = "Concrete"
+	return b
+}
+
+func (b *ConcreteHouseBuilder) GetHouse() *House {
+	return b.house
+}
 
 func main() {
-	rad := 3.0
-	clc := calc{}
+	builder := NewConcreteHouseBuilder()
+	house := builder.BuildWalls().BuildRoof().BuildWindows().BuildDoors().BuildFoundation().GetHouse()
 
-	circle := Circle{}
-
-	circle.radius = rad
-
-	square := clc.getSquare(rad)
-	circle.square = square
-
-	perimeter := clc.getPerimeter(rad)
-	circle.perimeter = perimeter
-
-	fmt.Println(circle)
-}
-
-func (c calc) getSquare(rad float64) float64 {
-	return math.Pi * math.Pow(rad, 2)
-}
-
-func (c calc) getPerimeter(rad float64) float64 {
-	return 2 * math.Pi * rad
+	fmt.Println("Built house with the following features:")
+	fmt.Printf("Walls: %s\n", house.Walls)
+	fmt.Printf("Roof: %s\n", house.Roof)
+	fmt.Printf("Windows: %s\n", house.Windows)
+	fmt.Printf("Doors: %s\n", house.Doors)
+	fmt.Printf("Foundation: %s\n", house.Foundation)
 }

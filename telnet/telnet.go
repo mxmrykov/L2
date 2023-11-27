@@ -72,10 +72,8 @@ func (c connection) start() {
 	//создаем адрес
 	address := fmt.Sprintf("%s:%s", c.address, c.port)
 	fmt.Println("Trying", address, "...")
-
 	//таймаут на подключение, по дефолту - 0
 	//если флаг таймаута задан - парсим его
-	fmt.Println(len(c.params))
 	timeOut := 0 * time.Second
 	if len(c.params) != 0 {
 		prvTime := strings.TrimSuffix(strings.Split(c.params[0], "=")[1], "s")
@@ -93,32 +91,48 @@ func (c connection) start() {
 	//ставим переменную сокета в объекте подключения
 	c.socket = conn
 
-	defer c.socket.Close()
 	fmt.Println("Connected to", address)
 
 	//параллельно запускаем чтение из сокета и чтение с консоли
 	go read(c)
-	go listen(c)
+	//go listen(c, &wg)
+
+	buf := make([]byte, 8192)
+	for {
+		//читаем Stdin, кидаем в буфер
+		fmt.Print("telnet> ")
+		inp, errRead := os.Stdin.Read(buf)
+		if errRead != nil {
+			fmt.Println("Err at read stdin:", errRead)
+			os.Exit(1)
+		}
+
+		//пишем полученные данные в сокет
+		_, errSockWrite := c.socket.Write(buf[:inp])
+		if errSockWrite != nil {
+			fmt.Println("Err at write socket:", errSockWrite)
+			os.Exit(1)
+		}
+	}
 }
 
 // чтение из сокета
 func read(c connection) {
 	//буфер получаемых данных
-	buf := make([]byte, 1024)
+	buf := make([]byte, 8192)
 	for {
 		//слушаем сокет и выводим полученные данные
 		inp, err := c.socket.Read(buf)
 		if err != nil {
-			fmt.Println("Err at read stdin:", err)
+			fmt.Println("Err at read socket:", err)
 			os.Exit(1)
 		}
-		fmt.Println(inp)
+		fmt.Println(string(buf[:inp]))
 	}
 }
 
 // чтение с консоли
 func listen(c connection) {
-	defer c.socket.Close()
 	//буфер вводимых данных
 	buf := make([]byte, 1024)
 	for {
